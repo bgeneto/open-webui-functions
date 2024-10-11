@@ -1,12 +1,13 @@
 """
 title: Chat Context Clipper (that works :-)
 author: open-webui & bgeneto (several improvements)
-author_url: https://github.com/open-webui-functions
+author_url: https://github.com/bgeneto/open-webui-functions/blob/main/chat_context_clipper_function.py
 funding_url: https://github.com/open-webui
 version: 0.1.2
 description: A filter that truncates chat history to retain the latest n-th user and assistant
              messages while always keeping the system prompt and also first message pair (if desired).
              It ensures that the first message (after the prompt if any) is a user message (Anthropic requirement).
+             It also offers a user valve to set the number of messages to retain, which overrides the global setting.
 """
 
 from typing import Dict, List, Optional, Union
@@ -61,7 +62,7 @@ class Filter:
             default=4, description="Number of last messages to keep"
         )
         keep_first: bool = Field(
-            default=True,
+            default=False,
             description="Always Keep the first user message and assistant answer",
         )
         pass
