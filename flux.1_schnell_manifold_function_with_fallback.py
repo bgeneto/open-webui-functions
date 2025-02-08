@@ -1,5 +1,5 @@
 """
-title: FLUX.1 Schnell Manifold Function for Black Forest Lab Image Generation Model from Several Providers.
+title: FLUX.1 Schnell Manifold Function for Black Forest Lab Image Generation Model from Multi Providers with Fallback.
 author: bgeneto
 author_url: https://github.com/bgeneto/open-webui-flux-image-gen
 funding_url: https://github.com/open-webui
@@ -64,8 +64,8 @@ class Pipe:
         Initialize the Pipe class with default values and environment variables.
         """
         self.type = "manifold"
-        self.id = "FLUX11_Schnell"
-        self.name = "FLUX1.1: "
+        self.id = "FLUX1_Schnell"
+        self.name = "FLUX.1: "
         self.valves = self.Valves(
             TOGETHER_API_KEY=os.getenv("TOGETHER_API_KEY", ""),
             HUGGINGFACE_API_KEY=os.getenv("HUGGINGFACE_API_KEY", ""),
@@ -190,7 +190,7 @@ class Pipe:
     ) -> None:
         """Verify authentication response and raise exception if unauthorized"""
         if response.status == 401:
-            logger.warning(f"Authentication failed for {provider.name}")
+            logger.error(f"Authentication failed for {provider.name}")
             raise aiohttp.ClientResponseError(
                 request_info=response.request_info,
                 history=response.history,
@@ -374,9 +374,9 @@ class Pipe:
             self.valves.HUGGINGFACE_API_KEY,
         ]
         if not any(key.strip() for key in api_keys):
-            return [{"id": "flux1.1_dev", "name": "Schnell (API key not set!)"}]
+            return [{"id": "flux.1_schnell", "name": "Schnell (API key not set!)"}]
 
-        return [{"id": "flux1.1_schnell", "name": "Schnell"}]
+        return [{"id": "flux.1_schnell", "name": "Schnell"}]
 
     async def pipe(
         self, body: Dict[str, Any]
@@ -390,9 +390,6 @@ class Pipe:
         Returns:
             Union[str, Generator[str, None, None], List[Dict[str, str]]]: The API response or pipes list.
         """
-        if "id" in body and body["id"] == "flux_schnell":
-            return self.pipes()
-
         prompt = get_last_user_message(body.get("messages", []))
         if not prompt:
             logger.error("No prompt found in the request body.")
@@ -403,14 +400,14 @@ class Pipe:
             provider.payload = self.provider_prompt_payload(
                 provider, provider.payload, prompt
             )
-            logger.info(f"Attempting to generate image using {provider.name}...")
+            logger.error(f"Attempting to generate image using {provider.name}...")
 
             try:
                 return await anext(self.stream_response(provider))
 
             except aiohttp.ClientResponseError as e:
                 last_error = e
-                logger.warning(
+                logger.error(
                     f"Provider {provider.name} failed with {str(e)}, trying next provider..."
                 )
                 continue

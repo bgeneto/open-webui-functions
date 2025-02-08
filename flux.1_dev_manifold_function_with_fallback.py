@@ -1,11 +1,11 @@
 """
-title: FLUX 1.1 Dev Manifold Function for Black Forest Lab Image Generation Model from Multi Providers with Fallback.
+title: FLUX.1 Dev Manifold Function for Black Forest Lab Image Generation Model from Multi Providers with Fallback.
 author: bgeneto
 author_url: https://github.com/bgeneto/open-webui-functions
 funding_url: https://github.com/open-webui
 created: 2025/02/08
 modified: 2025/02/08
-version: 0.1.3
+version: 0.1.4
 license: MIT
 requirements: pydantic, aiohttp, gradio_client
 environment_variables: HUGGINGFACE_API_KEY, DEEPINFRA_API_KEY, REPLICATE_API_KEY, TOGETHER_API_KEY
@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class Pipe:
     """
-    Class representing the FLUX1.1 Pro Manifold Function with asynchronous support.
+    Class representing the FLUX.1 Dev Manifold Function with asynchronous support.
     """
 
     class Valves(BaseModel):
@@ -70,7 +70,7 @@ class Pipe:
         """
         self.type = "manifold"
         self.id = "FLUX11_Dev"
-        self.name = "FLUX1.1: "
+        self.name = "FLUX.1: "
         self.user_valves = self.UserValves()
         self.valves = self.Valves(
             **{
@@ -554,9 +554,9 @@ class Pipe:
             self.valves.REPLICATE_API_KEY,
         ]
         if not any(key.strip() for key in api_keys):
-            return [{"id": "flux1.1_dev", "name": "Dev (API key not set!)"}]
+            return [{"id": "flux.1_dev", "name": "Dev (API key not set!)"}]
 
-        return [{"id": "flux1.1_dev", "name": "Dev"}]
+        return [{"id": "flux.1_dev", "name": "Dev"}]
 
     async def pipe(
         self, body: Dict[str, Any], __user__: dict
@@ -573,6 +573,9 @@ class Pipe:
         }
         body["stream"] = False
         prompt = get_last_user_message(body["messages"])
+        if not prompt:
+            logger.error("No prompt found in the request body.")
+            return "Error: No prompt provided."
 
         # Initialize aiohttp session
         async with aiohttp.ClientSession() as session:
