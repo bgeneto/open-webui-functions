@@ -3,7 +3,7 @@ title: Chat Context Clipper (that works :-)
 author: open-webui & bgeneto (several improvements)
 author_url: https://github.com/bgeneto/open-webui-functions/blob/main/chat_context_clipper_function.py
 funding_url: https://github.com/open-webui
-version: 0.1.3
+version: 0.1.4
 description: A filter that truncates chat history to retain the latest n-th user and assistant
              messages while always keeping the system prompt and also first message pair (if desired).
              It ensures that the first message (after the prompt if any) is a user message (Anthropic requirement).
@@ -59,7 +59,7 @@ class Filter:
             default=0, description="Priority level for the filter operations"
         )
         n_last_messages: int = Field(
-            default=4, description="Number of last messages to keep"
+            default=3, description="Number of last messages to keep"
         )
         keep_first: bool = Field(
             default=True,
@@ -69,7 +69,7 @@ class Filter:
 
     class UserValves(BaseModel):
         n_last_messages: int = Field(
-            default=4,
+            default=3,
             description="Number of last chat messages to keep in the assistant memory",
         )
         pass
@@ -82,10 +82,10 @@ class Filter:
     def inlet(self, body: dict, __user__: Optional[dict] = None) -> dict:
         messages = body["messages"]
 
-        # get n_last_messages from valves or user valves
+        # get n_last_messages from user valves or system valves
         n_last_messages = int(
-            self.user_valves.n_last_messages
-            if self.user_valves.n_last_messages
+            __user__["valves"].n_last_messages
+            if __user__["valves"].n_last_messages
             else self.valves.n_last_messages
         )
 
@@ -96,7 +96,7 @@ class Filter:
         if self.valves.keep_first:
             n_last_messages = n_last_messages + 2
 
-        # check if the number of messages is less than messages to keep (early exit)
+        # early exit: check if the number of messages is less than messages to keep
         if len(messages) <= n_last_messages:
             return body
 
